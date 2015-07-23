@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+	<meta name="qrichtext" content="1" />
+	<!-- Style -->
+   	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<!-- body -->
+<body>
+
+<p align="center"><h2><span id="title">Raster Unification </span></h2><img id="icon" src="../icons/maxent.png" /></p>
+
+<p><span id="section">Brief Description</span></p>
+
+Unifies any number of input raster layers to a common extent and no-data value. Also be used in the MAXENT data preperation. 
+Method is based on an idea from <a href="http://ssrebelious.wordpress.com/2012/09/02/raster-extent-modification-using-qgis/">Yury Ryabov</a>, who provided the code for this script.
+
+</p>
+<p><span id="section">Parameters</span></p>
+<ul>
+	<li><p>
+		<span>[param] Input Raster Layers: </span> Any numbers of raster layers</p>
+	</li>
+	<li><p>
+		<span>[param] Nodata value: </span> Choose a common no-data value for all layers</p>
+	</li>
+	<li><p>
+		<span> Output Folder: </span> All unified raster layers will be saved in this folder and added to QGIS in the end. </p>
+	</li>	
+</ul>
+
+</ul></p>
+
+<p>
+<span id="section">Author</span>
+</p>
+
+<p>Yury Ryabov - 2014 <b>|</b> <a href="http://ssrebelious.wordpress.com/2012/09/02/raster-extent-modification-using-qgis/"> Homepage </a> <b> | </b> <a href="http://hub.qgis.org/projects/qsdm ">Report Bugs</a></p>
+
+<p><span id="section">Donation</span></p>
+<p> Was this function useful? Consider a donation to support future QSDM development.<br>
+<a id="donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=XMCVJQSAGQAVE"><img alt="PayPal Donate Button" src="donate.gif" /></a>
+</p>
+
+</body>
+</html>

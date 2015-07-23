@@ -1,0 +1,9 @@
+
+Steven J. Phillips, Robert P. Anderson and Robert E. Schapire, (2006) "Maximum entropy modeling of
+species geographic distributions" Ecological Modelling, Vol 190/3-4 pp 231-259
+
+Steven J. Phillips and Miroslav Dudik, (2008) "Modeling of species distributions with Maxent: new
+extensions and a comprehensive evaluation." Ecography, Vol 31, pp 161-175
+
+Jane Elith et al. (2011) "A statistical explanation of MaxEnt for ecologists" Diversity and Distributions, 17, 43–57
+DOI: 10.1111/j.1472-4642.2010.00725.x

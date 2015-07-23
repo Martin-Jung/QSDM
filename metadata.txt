@@ -1,0 +1,44 @@
+# This file contains metadata for your plugin. Beginning
+# with version 1.8 this is the preferred way to supply information about a
+# plugin. The current method of embedding metadata in __init__.py will
+# be supported until version 2.0
+
+# This file should be included when you package your plugin.
+
+[general]
+name=QSDM
+qgisMinimumVersion=2.0
+about= Enabling various functions for biodiversity modelling for QGIS
+description= Species distribution modeling support for the QGIS Processing toolbox
+version=0.2
+
+# Uncomment the following line and add your changelog entries:
+changelog= 
+	0.2
+	Update:
+	- JAVA Error message fixed.
+	- 
+
+	0.1
+	Initial Release:
+	- Maxent support enabled
+	- Ability to calculate Niche Overlap Statistics
+	- Calculate simple Range Shifts
+	- Calculate simple Data transformation
+
+# tags are comma separated with spaces allowed
+tags=Ecology,Maxent,SDM,Macroecology,Species Distribution Model,Processing,Regression
+category=Analysis
+icon=icons/default.png
+
+# experimental flag
+experimental=True
+# deprecated flag (applies to the whole plugin, not just a single version
+deprecated=False
+
+# Author contact information
+author=Martin Jung
+email=martinjung-at-zoho.com
+homepage=http://conservationecology.wordpress.com/qgis-plugins-and-scripts/qsdm/
+tracker=http://hub.qgis.org/projects/QSDM
+repository=https://github.com/Curlew/QSDM

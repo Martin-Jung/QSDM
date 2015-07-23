@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+	<meta name="qrichtext" content="1" />
+	<!-- Style -->
+   	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<!-- body -->
+<body>
+
+<p align="center"><h2><span id="title"> Create Species Richness grid </span></h2><img id="icon" src="../icons/default.png" /></p>
+
+<p><span id="section">Brief Description</span></p>
+
+Generates a new species richness grid based on the number of points in each grid cell. Three different metrics can be computed :
+<b>Species Richness</b> as sum of unique species per cell. <b>Weighted Endemism</b>, which is the sum of the reciprocal of the total number of cells each species in a grid cell is found in. Emphasizes areas that have a high proportion of animals with restricted ranges. <b>Corrected Weighted Endemism</b>, which is Weighted Endemism divided by Species Richness per grid cell.
+
+<p><span id="section">Parameters</span></p>
+<ul>
+	<li><p>
+		<span>[param] Input Vector Layers: </span> A point layer containing species occurences</p>
+	</li>
+	<li><p>
+		<span>[param] Input Vector Field: </span> A field containing the name of (individual) species</p>
+	</li>
+	<li><p>
+		<span>[param] Input Metric selection: </span> User can decide what to calculate</p>
+	</li>
+	<li><p>
+		<span>[param] Input Grain size: </span> Number indicating the resolution of the new layer. <b>Please note that this value is projection dependent. If you want to make 1° resolution grid than your project and layers have to be in this projection too. </b></p>
+	</li>
+	<li><p>
+		<span> Output Raster: </span> Results are added to QGIS. </p>
+	</li>	
+</ul>
+
+</ul></p>
+
+<p>
+<span id="section">Author</span>
+</p>
+
+<p>Martin Jung - 2014 <b>|</b> <a href="http://conservationecology.wordpress.com/qgis-plugins-and-scripts/qsdm/"> QSDM Homepage </a> <b> | </b> <a href="http://hub.qgis.org/projects/qsdm ">Report Bugs</a></p>
+
+<p><span id="section">Donation</span></p>
+<p> Was this function useful? Consider a donation to support future QSDM development.<br>
+<a id="donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=XMCVJQSAGQAVE"><img alt="PayPal Donate Button" src="donate.gif" /></a>
+</p>
+
+</body>
+</html>

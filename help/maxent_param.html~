@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+	<meta name="qrichtext" content="1" />
+	<!-- Style -->
+   	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<!-- body -->
+<body>
+
+<p align="center"><h2><span id="title">Parameters for MAXENT </span></h2><img id="icon" src="../icons/maxent.png" /></p>
+
+<p><span id="section">Brief Description</span></p>
+
+<p>Uses the external MAXENT modelling tool (Phillips et al. 2006) to predict a species distribution using presence-only data for a given extent. This software takes as input a set of layers or environmental variables (such as elevation, precipitation, etc.), as well as a set of georeferenced occurrence locations, and produces a model of the range of the given species. </p>
+A tutorial how to work with MAXENT can be found in the attached literature or on the <a href="http://www.cs.princeton.edu/~schapire/maxent/tutorial/tutorial.doc">website of the authors</a>.
+<p>
+This processing function gives the user control about specific parameters to be set as input for the MAXENT modelling tool.
+
+<p><span id="section">Parameters</span></p>
+<ul>
+	<li><p>
+		<span>[param] Parameter: </span>Parameter setting for MAXENT. For help please look at the provided literature links</p>
+	</li>
+	<li> ... 	</li>
+	<li><p>
+		<span> [param] Output: </span> The generated output contains a .csv file containing the value for the optional parameters </p>
+	</li>	
+</ul>
+
+<p><span id="section">Literature</span></p>
+<p>
+<ul>
+<li>Steven J. Phillips, Robert P. Anderson and Robert E. Schapire, (2006) "Maximum entropy modeling of
+species geographic distributions" Ecological Modelling, Vol 190/3-4 pp 231-259</li>
+
+<li>Steven J. Phillips and Miroslav Dudik, (2008) "Modeling of species distributions with Maxent: new
+extensions and a comprehensive evaluation." Ecography, Vol 31, pp 161-175</li>
+
+<li>Jane Elith et al. (2011) "A statistical explanation of MaxEnt for ecologists" Diversity and Distributions, 17, 43-57</li>
+
+<li> Merow, C., Smith, M. J. and Silander, J. A. (2013), A practical guide to MaxEnt for modeling species distributions: what it does, and why inputs and settings matter. Ecography, 36: 1058-1069.</li>
+</ul>
+
+</p>
+
+<p>
+<span id="section">Author</span>
+</p>
+
+<p>Martin Jung - 2014 <b>|</b> <a href="http://conservationecology.wordpress.com/qgis-plugins-and-scripts/qsdm/"> QSDM Homepage </a> <b> | </b> <a href="http://hub.qgis.org/projects/qsdm ">Report Bugs</a></p>
+
+<p><span id="section">Donation</span></p>
+<p> Was this function useful? Consider a donation to support future QSDM development.<br>
+<a id="donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=XMCVJQSAGQAVE"><img alt="PayPal Donate Button" src="donate.gif" /></a>
+</p>
+
+</body>
+</html>
