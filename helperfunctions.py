@@ -31,7 +31,16 @@ from qgis.core import *
 from qgis.gui import *
 
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
+<<<<<<< HEAD
 import numpy
+=======
+import ntpath, platform
+import numpy
+try:
+    import scipy
+except ImportError:
+    pass
+>>>>>>> old
 # Try to import functions from osgeo
 try:
     from osgeo import gdal, gdalconst
@@ -350,7 +359,11 @@ def getLayerByName( layerName ):
           return None
           
 # Get all field values of a given attribute from a vector layer
+<<<<<<< HEAD
 def getUniqueAttributeList( vlayer, field):
+=======
+def getUniqueAttributeList( vlayer, field,replace=False):
+>>>>>>> old
   path = vlayer.source()
   datasource = ogr.Open(str(path))
   layer = datasource.GetLayer()
@@ -365,7 +378,12 @@ def getUniqueAttributeList( vlayer, field):
   for i in range(0,d.GetFeatureCount()):
     f = d.GetFeature(i)
     val = f.GetField(0)
+<<<<<<< HEAD
     val = val.replace(" ","_") # Replace spaces with underscores
+=======
+    if replace:
+        val = val.replace(" ","_") # Replace spaces with underscores
+>>>>>>> old
     if val not in attr:
         attr.append(val)
   return attr
@@ -392,6 +410,31 @@ def saveToCSV(results, titles, filePath ):
     for item in results:
         writer.writerow(item)
     f.close()
+<<<<<<< HEAD
+=======
+
+# Format Path    
+def FormatOutputPath(in_path, out_path,add="warped"):
+  '''
+  creates a path to the resulting file
+
+  @param in_path:    Input raster path (string)
+  @param out_path    Input path to the destination folder (string)
+  @return full_path  Output directory + filename path (string)
+  '''
+  f_name = ntpath.basename(in_path)
+  match = re.search(r'(.+)\.\w+', f_name)
+  f_name = match.group(1) + add + os.path.splitext(in_path)[1]
+
+  if platform.system() == 'Windows':
+    delimiter = '\\'
+  else:
+    delimiter = '/'
+
+  out_path = out_path + delimiter
+  full_path = ntpath.join(out_path, f_name)
+  return full_path    
+>>>>>>> old
     
 # Adds a generated Raster to the QGis table of contents
 def rasterInQgis(rasterPath):
@@ -467,6 +510,24 @@ def getArrayFromRaster(rasterPath):
     except Exception, AttributeError:
         return None
 
+<<<<<<< HEAD
+=======
+# This function will convert the rasterized clipper shapefile 
+# to a mask for use within GDAL.    
+def imageToArray(i):
+    """
+    Converts a Python Imaging Library array to a 
+    gdalnumeric image.
+    """
+    try:
+        a=numpy.fromstring(i.tostring(),'b')
+    except SystemError:
+        a = None
+    if a != None:
+        a.shape=i.im.size[1], i.im.size[0]
+    return a
+    
+>>>>>>> old
 def world2Pixel(geoMatrix, x, y):
     """
     Uses a gdal geomatrix (gdal.GetGeoTransform()) to calculate
@@ -593,7 +654,11 @@ def PixelToMap(px,py,gt):
   mx,my=ApplyGeoTransform(px,py,gt)
   return mx,my
 
+<<<<<<< HEAD
 def ExtendRaster(raster, xy_list, output, main_geo_transform, proj, no_data):
+=======
+def ExtendRaster(raster, xy_list, output, main_geo_transform, proj, no_data, r_format = "GTiff"):
+>>>>>>> old
   '''
   Extends canvas of the given raster to the extent provided by xy_list in
   [minx, miny, maxx, maxy] format
@@ -622,6 +687,10 @@ def ExtendRaster(raster, xy_list, output, main_geo_transform, proj, no_data):
 
   # set number of columns and rows for raster
   geo_transform = raster.GetGeoTransform()
+<<<<<<< HEAD
+=======
+
+>>>>>>> old
   columns = (maxx - minx) / main_geo_transform[1]
   columns = int(abs(columns))
   rows = (maxy - miny) / main_geo_transform[5]
@@ -629,19 +698,33 @@ def ExtendRaster(raster, xy_list, output, main_geo_transform, proj, no_data):
   bands = raster.RasterCount
 
   # create raster
+<<<<<<< HEAD
   r_format = "GTiff"
+=======
+>>>>>>> old
   driver = gdal.GetDriverByName(r_format)
   metadata = driver.GetMetadata()
   if metadata.has_key( gdal.DCAP_CREATE ) and metadata[ gdal.DCAP_CREATE ] == "YES":
     pass
   else:
+<<<<<<< HEAD
     print "Driver %s does not support Create() method." % format
+=======
+    raise GeoAlgorithmExecutionException("Driver %s does not support Create() method." % (format))
+>>>>>>> old
     return False
 
   try:
     outData = driver.Create(output, columns, rows, bands, data_type)
   except:
+<<<<<<< HEAD
     return NoPathGiven()
+=======
+    raise GeoAlgorithmExecutionException("Output path corrupt.")
+    return False
+  
+  # Set Pprojection
+>>>>>>> old
   outData.SetProjection(proj)
 
   # we don't want rotated raster in output
@@ -680,7 +763,12 @@ def ExtendRaster(raster, xy_list, output, main_geo_transform, proj, no_data):
         new_raster[row, col] = pix_value
 
     outData.GetRasterBand(i).WriteArray(new_raster)
+<<<<<<< HEAD
 
+=======
+    outData.GetRasterBand(i).SetNoDataValue(no_data)
+    
+>>>>>>> old
   # close dataset
   outData = None
 
@@ -760,7 +848,10 @@ def gridInterpolation(raster,temp,match_geotrans,main_cols,main_rows, match_proj
         except ImportError:
             DEVNULL = open(os.devnull, 'wb')
         proc = subprocess.call(['gdalwarp','-te',str( ex[0] ),str( ex[1] ),str( ex[2] ),str( ex[3] ), '-tr',str(x),str(y),'-r',interp.lower(), rasterPath, output],stdin=subprocess.PIPE, stdout=DEVNULL, stderr=subprocess.STDOUT)
+<<<<<<< HEAD
         print ['gdalwarp','-te',str( ex[0] ),str( ex[1] ),str( ex[2] ),str( ex[3] ), '-tr',str(x),str(y),'-r',interp.lower(), rasterPath, output]
+=======
+>>>>>>> old
         if proc == 0:
             r = gdal.Open(output)
             if r is None:
@@ -770,6 +861,7 @@ def gridInterpolation(raster,temp,match_geotrans,main_cols,main_rows, match_proj
         else:
             raise GeoAlgorithmExecutionException("Error calling gdalwarp for interpolation.")
 
+<<<<<<< HEAD
 #def vectorToRaster(self, fieldName, layerName, layer, referenceRasterName, outputRaster):
 # 		# band set
 # 		if self.bndSetPresent == "Yes" and referenceRasterName == self.bndSetNm:
@@ -829,6 +921,50 @@ def gridInterpolation(raster,temp,match_geotrans,main_cols,main_rows, match_proj
 # 			# logger
 # 			if self.logSttngVal == "Yes": self.logToFile(str(inspect.stack()[0][3])+ " " + self.lineOfCode(), "vector to raster check: " + outCheck)
 
+=======
+def vectorToRaster(Inputarray,rows,cols,feature):
+    """
+    Rasterizes a vector feature with burnvalue 1
+    """
+    
+    # open input with GDAL
+    raster = gdal.Open(refRstrSrc)
+    # number of x pixels
+    refRstrCols = refRstrDt.RasterXSize
+    # number of y pixels
+    refRstrRows = refRstrDt.RasterYSize
+    # check projections
+    refRstrProj = refRstrDt.GetProjection()
+    # pixel size and origin
+    refRstGeoTrnsf = refRstrDt.GetGeoTransform()
+    refRstPxlXSz = abs(refRstGeoTrnsf[1])
+    refRstPxlYSz = abs(refRstGeoTrnsf[5])
+    tifDrvr = gdal.GetDriverByName( "GTiff" )
+    outputRaster = tifDrvr.Create(outputRaster, refRstrCols, refRstrRows, 1, GDT_Int32)
+    outputRasterBand = outputRaster.GetRasterBand(1)
+
+    driver = gdal.GetDriverByName( 'MEM' )  
+    ds = driver.Create( '', 255, 255, 1, gdal.GDT_Int32)  
+    # set raster projection from reference
+    outputRaster.SetGeoTransform( [ refRstGeoTrnsf[0] , refRstGeoTrnsf[1] , 0 , refRstGeoTrnsf[3] , 0 , refRstGeoTrnsf[5] ] )
+    outputRaster.SetProjection(refRstrProj)
+    outputRasterBand.SetNoDataValue(-9999)
+    matrix = numpy.zeros((refRstrRows, refRstrCols), dtype='int32')
+    matrix.fill(-9999)
+    outputRasterBand.WriteArray(matrix, 0, 0)
+    outputRasterBand.FlushCache()
+    source_ds = ogr.Open(layer)
+    source_layer = source_ds.GetLayer()
+    # convert reference layer to raster
+    outCheck = gdal.RasterizeLayer(outputRaster, [1], source_layer, options = ["ATTRIBUTE=" + str(fieldName)])
+    gdal.RasterizeLayer(raster_dataset, [1], shape_layer, None, None, [1], ['ALL_TOUCHED=TRUE'])
+    # close bands and rasters
+    outputRasterBand = None
+    # close rasters
+    outputRaster = None
+    # logger
+    
+>>>>>>> old
 
 def unificationNecessary(rasterList):
     ex = None
@@ -945,4 +1081,20 @@ def updateProcessing(progress,i,n,text=None):
     progress.setPercentage(int(100 * i / n))
     if text != None:
         progress.setText(text)
+<<<<<<< HEAD
     
+=======
+
+# Count Nonzero alternatives
+def count_nonzero(array):
+    if hasattr(numpy,'count_nonzero'):
+        return numpy.count_nonzero(array)
+    try:
+        import scipy
+        if hasattr(scipy,'count_nonzero'):
+            return scipy.count_nonzero(array)
+        else:
+            return (array != 0).sum()
+    except ImportError:
+        return (array != 0).sum()
+>>>>>>> old

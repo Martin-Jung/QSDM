@@ -8,6 +8,7 @@
 [general]
 name=QSDM
 qgisMinimumVersion=2.0
+<<<<<<< HEAD
 description=Species distribution modelling support for the QGIS Processing toolbox
 version=0.1
 
@@ -17,6 +18,25 @@ changelog=
 	Initial Release:
 	- Maxent support enabled
 	- Data preperation tools implemented
+=======
+about= Enabling various functions for biodiversity modelling for QGIS
+description= Species distribution modeling support for the QGIS Processing toolbox
+version=0.2
+
+# Uncomment the following line and add your changelog entries:
+changelog= 
+	0.2
+	Update:
+	- JAVA Error message fixed.
+	- 
+
+	0.1
+	Initial Release:
+	- Maxent support enabled
+	- Ability to calculate Niche Overlap Statistics
+	- Calculate simple Range Shifts
+	- Calculate simple Data transformation
+>>>>>>> old
 
 # tags are comma separated with spaces allowed
 tags=Ecology,Maxent,SDM,Macroecology,Species Distribution Model,Processing,Regression
@@ -31,6 +51,10 @@ deprecated=False
 # Author contact information
 author=Martin Jung
 email=martinjung-at-zoho.com
+<<<<<<< HEAD
 homepage=http://conservationecology.wordpress.com/lecos-land-cover-statistics/
+=======
+homepage=http://conservationecology.wordpress.com/qgis-plugins-and-scripts/qsdm/
+>>>>>>> old
 tracker=http://hub.qgis.org/projects/QSDM
 repository=https://github.com/Curlew/QSDM

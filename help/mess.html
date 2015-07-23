@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+	<meta name="qrichtext" content="1" />
+	<!-- Style -->
+   	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<!-- body -->
+<body>
+
+<p align="center"><h2><span id="title">Maximum Entropy Modelling (MAXENT) - GUI </span></h2><img id="icon" src="../icons/maxent.png" /></p>
+
+<p><span id="section">Brief Description</span></p>
+
+<p>The Multivariate Environmental Similarity Surfaces (MESS) is an index that represents how similar a point in space is to a reference set of points, with respect to a set of predictor variables (Elith et al 2010). 
+<p><
+This processing function attempts to start the graphical interface of MAXENT directly, thus allowing more direct control of the input features.
+
+<p><span id="section">Parameters</span></p>
+<ul>
+	<li><p>
+		<span>[param] Input Vector Layer: </span>Point localities of species occurences</p>
+	</li>
+	<li><p>
+		<span>[param] Input Vector Field: </span>Species name inside the vector layer </p>
+	</li>
+	<li><p>
+		<span> Output Results: </span>The generated prediction + MAXENT results are automatically loaded into QGIS after execution. A high value of the function at a particular grid cell indicates that the grid cell is predicted to have suitable conditions for that species.  The computed model is a probability distribution over all the grid cells </p>
+	</li>	
+</ul>
+<p><span id="section">Notes</span></p>
+	<p><ul>
+<li>Results are saved in the <b> work folder <b>, which can be set in the Processing Options</li>
+<li>Intermediate file conversions are saved in the <b> temp folder <b>, which can be set in the Processing Options</li>
+
+</ul></p>
+
+<p><span id="section">Literature</span></p>
+<p>
+<ul>
+<li>Elith J., Kearney M., & Phillips S. 2010. The art of modelling range-shifting species. Met. Ecol. Evol 1 :330-342.</li>
+</ul>
+
+</p>
+
+<p>
+<span id="section">Author</span>
+</p>
+
+<p>Martin Jung - 2014 <b>|</b> <a href="http://conservationecology.wordpress.com/qgis-plugins-and-scripts/qsdm/"> QSDM Homepage </a> <b> | </b> <a href="http://hub.qgis.org/projects/qsdm ">Report Bugs</a></p>
+
+<p><span id="section">Donation</span></p>
+<p> Was this function useful? Consider a donation to support future QSDM development.<br>
+<a id="donate" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=XMCVJQSAGQAVE"><img alt="PayPal Donate Button" src="donate.gif" /></a>
+</p>
+
+</body>
+</html>

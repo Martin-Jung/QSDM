@@ -1,0 +1,548 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"margi",
+				"margin"
+			],
+			[
+				"text",
+				"text-align"
+			],
+			[
+				"background-c",
+				"background-color"
+			],
+			[
+				"margin",
+				"margin-bottom"
+			],
+			[
+				"martin",
+				"martinjung_NOSPAM_zoho"
+			],
+			[
+				"it",
+				"textit{}	\\textit{}"
+			],
+			[
+				"subs",
+				"subsection{}	\\subsection{}"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "qsdm_main.py",
+			"settings":
+			{
+				"buffer_size": 2371,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "# -*- coding: utf-8 -*-\n\"\"\"\n/***************************************************************************\n QSDM\n        Species distribution modelling support for the QGIS Processing toolbox\n                        -------------------\n        begin                : 2014-03-31\n        copyright            : (C) 2014 by Martin Jung\n        email                : martinjung-at-zoho.com\n ***************************************************************************/\n\n/***************************************************************************\n *                                                                         *\n *   This program is free software; you can redistribute it and/or modify  *\n *   it under the terms of the GNU General Public License as published by  *\n *   the Free Software Foundation; either version 2 of the License, or     *\n *   (at your option) any later version.                                   *\n *                                                                         *\n ***************************************************************************/\n\"\"\"\n__author__ = 'Martin Jung'\n__date__ = 'April 2014'\n__copyright__ = '(C) 2014, Martin Jung'\n__revision__ = '$Format:%H$' # This will get replaced with a git SHA1 when you do a git archive\n\n# Import PyQT bindings\nfrom PyQt4.QtCore import *\nfrom PyQt4.QtGui import *\n\n# Import QGIS analysis tools\nfrom qgis.core import *\nfrom qgis.gui import *\nfrom qgis.analysis import *\nfrom qgis.utils import *\n\nimport os,sys,csv,string,math,operator,subprocess,tempfile,inspect\n\n# Try to import functions from osgeo\ntry:\n    from osgeo import gdal\nexcept ImportError:\n    import gdal\ntry:\n    from osgeo import ogr, osr\nexcept ImportError:\n    import ogr,osr\n\nimport numpy\n\n# Importing Sklean tools\nfrom sklearn.datasets.base import Bunch\nfrom sklearn.datasets import fetch_species_distributions\nfrom sklearn.datasets.species_distributions import construct_grids\nfrom sklearn import svm, metrics\n\nfrom processing.core.GeoAlgorithm import GeoAlgorithm\nfrom processing.core.ProcessingLog import ProcessingLog\nfrom processing.core.Processing import Processing\nfrom processing.core.ProcessingConfig import ProcessingConfig\nfrom processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException\nfrom processing.tools.system import *\n# Also import settings\nfrom qsdm_settings import qsdm_settings\n# Import helperfunctions\nimport helperfunctions as func\n\n# Import Processing algorithm parameters\ntry:\n    from processing.parameters.ParameterTable import ParameterTable\n    from processing.parameters.ParameterMultipleInput import ParameterMultipleInput\n    from processing.parameters.ParameterRaster import ParameterRaster\n    from processing.parameters.ParameterNumber import ParameterNumber\n    from processing.parameters.ParameterSelection import ParameterSelection\n    from processing.parameters.ParameterTableField import ParameterTableField\n    from processing.parameters.ParameterExtent import ParameterExtent\n    from processing.parameters.ParameterFixedTable import ParameterFixedTable\n    from processing.parameters.ParameterVector import ParameterVector\n    from processing.parameters.ParameterBoolean import ParameterBoolean\n    from processing.parameters.ParameterFactory import ParameterFactory\n    from processing.parameters.ParameterString import ParameterString\n    \n    from processing.outputs.OutputFactory import OutputFactory\n    from processing.outputs.OutputTable import OutputTable\n    from processing.outputs.OutputVector import OutputVector\n    from processing.outputs.OutputRaster import OutputRaster\n    from processing.outputs.Output import Output\nexcept ImportError:\n    from processing.core.parameters import ParameterTable\n    from processing.core.parameters import ParameterMultipleInput\n    from processing.core.parameters import ParameterRaster\n    from processing.core.parameters import ParameterNumber\n    from processing.core.parameters import ParameterSelection\n    from processing.core.parameters import ParameterTableField\n    from processing.core.parameters import ParameterExtent\n    from processing.core.parameters import ParameterFixedTable\n    from processing.core.parameters import ParameterVector\n    from processing.core.parameters import ParameterBoolean\n    #from processing.core.parameters import ParameterFactory\n    from processing.core.parameters import ParameterString\n    \n    #from processing.core.outputs import OutputFactory\n    from processing.core.outputs import OutputTable\n    from processing.core.outputs import OutputVector\n    from processing.core.outputs import OutputRaster\n    from processing.core.outputs import Output  \n\nclass SupportVectorMachine(GeoAlgorithm):\n    \n    SPECIES = 'SPECIES'\n    ENV = 'ENV'\n\n    OUT_PRED = 'OUT_PRED'\n    OUT_PRED_RES = 'OUT_PRED_RES'\n    \n    def getIcon(self):\n        return QIcon(os.path.dirname(__file__) +os.sep+\"..\"+ os.sep+\"icons\"+os.sep+\"svm.png\")\n    \n    def defineCharacteristics(self):\n        self.name = 'Support Vector Machine (SVM)'\n        self.cmdName = 'svm'\n        self.group = 'Species Distribution Modelling'\n\n        self.addParameter(ParameterVector(self.SPECIES, 'Species localities',[ParameterVector.VECTOR_TYPE_POINT,ParameterTable],False)) # Allow point\n        self.addParameter(ParameterMultipleInput(self.ENV,'Environmental layers',ParameterMultipleInput.TYPE_RASTER, False))\n\n        self.addOutput(OutputRaster(self.OUT_PRED,'Output Prediction'))\n        self.addOutput(OutputTable(self.OUT_PRED_RES,'Stats'))\n\n    def processAlgorithm(self, progress):\n        # Set up the data as sklearn bunch (basically just a dictionary with specific attributes)\n        data = Bunch()\n\n        # Vector layer\n        vector = self.getParameterValue(self.SPECIES)\n        v = Processing.getObject(vector)\n        v_crs = v.crs()\n        \n        # Environmental layers\n        envlayers = self.getParameterValue(self.ENV)        \n        if func.unificationNecessary(envlayers.split(\";\")):\n            raise GeoAlgorithmExecutionException(\"All input environmental layers need to have the same resolution and extent. Use the Unify tool beforehand\")\n            #TODO: Enable option to do this automatically\n\n        progress.setConsoleInfo(\"Loading Coverage Data\")                \n\n        # Check Projection and Cellsize\n        for lay in envlayers.split(\";\"):\n            r = Processing.getObject(lay) # QgsRasterLayer object\n            if r.crs() != v_crs:\n                raise GeoAlgorithmExecutionException(\"All input layers need to have the same projection\")\n            if round(r.rasterUnitsPerPixelX()) != round(r.rasterUnitsPerPixelY()):\n                raise GeoAlgorithmExecutionException(\"Grid Cell size values are not equal. Please be sure that grid cells are squares.\")            \n\n        # Set coverage parameters\n        r = Processing.getObject(envlayers.split(\";\")[0]) # QgsRasterLayer object\n        ex = r.extent()\n        data[\"grid_size\"] = r.rasterUnitsPerPixelX()        \n        data[\"Nx\"] = r.width()\n        data[\"Ny\"] = r.height()        \n        data[\"x_left_lower_corner\"] = ex.xMinimum()\n        data[\"y_left_lower_corner\"] = ex.yMinimum()\n\n        # Load in Coverage values\n        coverage = []\n        for lay in envlayers.split(\";\"):\n            raster = gdal.Open(str(lay))\n            if raster.RasterCount > 1:\n                progress.setConsoleInfo(\"Warning: Multiple bands for layer detected. Using only first band.\")                \n            array = raster.GetRasterBand(1).ReadAsArray()\n            NA = raster.GetRasterBand(1).GetNoDataValue()\n            if NA == None:\n                raise GeoAlgorithmExecutionException(\"Warning: Raster layer has no no-data value. Please specify a no-data value for this dataset.\")                \n            else:\n                array[array==NA] = -9999 # Replace nodata-values of array with -9999            \n            coverage.append(array)    \n        data[\"coverages\"] = numpy.array( coverage ) # Load all the coverage values into the bunch\n\n        # Setup parameters for output prediction\n        a = gdal.Open(envlayers.split(\";\")[0])\n        columns = a.RasterXSize\n        rows = a.RasterYSize\n        driver = a.GetDriver()            \n        NA = -9999\n        gt = a.GetGeoTransform()\n        proj = a.GetProjection()\n        output = self.getOutputValue(self.OUT_PRED)        \n\n\n        # Set up the data grid\n        xgrid, ygrid = construct_grids(data)\n        \n        # The grid in x,y coordinates           \n        X, Y = numpy.meshgrid(xgrid, ygrid[::-1])\n\n        # background points (grid coordinates) for evaluation        \n        numpy.random.seed(100)\n        background_points = numpy.c_[numpy.random.randint(low=0, high=data.Ny,\n                                                    size=10000),\n                                numpy.random.randint(low=0, high=data.Nx,\n                                                    size=10000)].T\n\n        # We'll make use of the fact that coverages[6] has measurements at all\n        # land points.  This will help us decide between land and water.\n        # FIXME: Assuming that all predictors have a similar distribution. Might be violated\n        land_reference = data.coverages[0]\n\n        progress.setConsoleInfo(\"Loading Occurence Data and coverage\")                \n        # Creating response\n        train = []\n        for feature in v.getFeatures():\n            geom = feature.geometry().asPoint()\n            mx = geom.x()\n            my = geom.y()\n            train.append((mx,my)) \n        data[\"train\"] = numpy.array(train) # Add to bunch as training dataset\n\n        # create species bunch      \n        sp_Bunch = Bunch(name=\"Species\")\n        points = dict(train=data.train)\n        for label, pts in points.iteritems():\n            #determine coverage values for each of the training & testing points\n            ix = numpy.searchsorted(xgrid, pts[0])\n            iy = numpy.searchsorted(ygrid, pts[1])  \n            bunch['cov_%s' % label] = data.coverages[:, -iy, ix].T\n\n        progress.setConsoleInfo(\"Finished loading coverage data of environmental layers\")                 \n                                \n        # Starting modelling\n        progress.setConsoleInfo(\"Finished preparing the data for the analysis\")                \n        progress.setConsoleInfo(\"----\")  \n        progress.setConsoleInfo(\"Starting Modelling with support of sklearn\")                \n                      \n        # Standardize features\n        #TODO: Enable different or no Standardization methods\n        mean = sp_Bunch.cov.mean(axis=0)\n        std = sp_Bunch.cov.std(axis=0)\n        train_cover_std = (sp_Bunch.cov - mean) / std\n\n        # Fit OneClassSVM\n        progress.setConsoleInfo(\"Fitting Support Vector Machine\") \n        # TODO: Allow the user to vary the input                \n        clf = svm.OneClassSVM(nu=0.1, kernel=\"rbf\", gamma=0.5)\n        clf.fit(train_cover_std)\n        progress.setConsoleInfo(\"Fitting done\") \n                \n        # Predict species distribution using the training data\n        Z = numpy.ones((data.Ny, data.Nx), dtype=numpy.float64)\n\n        # We'll predict only for the land points.\n        idx = numpy.where(land_reference > -9999)\n        coverages_land = data.coverages[:, idx[0], idx[1]].T\n\n        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]\n        Z *= pred.min()\n        Z[idx[0], idx[1]] = pred\n\n        levels = numpy.linspace(Z.min(), Z.max(), 25)\n        Z[land_reference == -9999] = -9999\n\n        result = Z # save the final results scores \n        \n        # Compute AUC w.r.t. background points\n        pred_background = Z[background_points[0], background_points[1]]\n        pred_test = clf.decision_function((species.cov_test - mean)\n                                          / std)[:, 0]\n        scores = numpy.r_[pred_test, pred_background]\n        y = numpy.r_[numpy.ones(pred_test.shape), numpy.zeros(pred_background.shape)]\n        fpr, tpr, thresholds = metrics.roc_curve(y, scores)\n        roc_auc = metrics.auc(fpr, tpr) #  Area under the ROC curve\n        # TODO: Evaluate the availability of other metrics to compute on (average mean error, etc.. )\n        \n        # Create Output Prediction File\n        output = self.getOutputValue(self.OUT_PRED_RES)\n        titles =  ['AUC']\n        res_pred = [roc_auc]\n        # Save Output\n        func.saveToCSV(res_pred, titles, output)\n\n        # Create Output for resulting prediction        \n        metadata = driver.GetMetadata()\n        if metadata.has_key( gdal.DCAP_CREATE ) and metadata[ gdal.DCAP_CREATE ] == \"YES\":\n            pass\n        else:\n            progress.setConsoleInfo(\"Output creation of input Fileformat is not supported by gdal. Create GTiff by default.\")\n            driver = gdal.GetDriverByName(\"GTiff\")            \n\n        data_type = result.dtype        \n        try:\n            outData = driver.Create(output, columns, rows, 1, data_type)\n        except Exception, e:\n            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR,\"Output file could not be created!\")\n        \n        band = outData.GetRasterBand(1)\n        band.WriteArray(result)\n        band.FlushCache()\n        if nodata is not None:\n            band.SetNoDataValue( nodata )\n        band = None\n    \n        # Copy original geotransform and projection     \n        outData.SetGeoTransform(gt) \n        outData.SetProjection(proj)\n\n        outData = None # Close writing\n\n    def helpFile(self):\n        return os.path.join(os.path.dirname(__file__) + os.sep + \"..\" + os.sep + \"help\", self.cmdName + \".html\")\n\n\n# !/usr/bin/env python\n# from rios import rat\n# import osgeo.gdal as gdal\n# import numpy as np\n# from sklearn.ensemble import RandomForestClassifier\n \n# # Open RAT\n# inRatFile = 'palsar_hhhv_clumps_elim_final.kea'\n# ratDataset = gdal.Open(inRatFile, gdal.GA_Update)\n \n# # Set column names\n# x_col_names = ['hh','hv',\n#                'hh_tex','hv_tex'\n#                'elevation', 'slope']\n \n# y_col_name = 'wetCode'\n \n# # Set up list to hold data\n# X = []\n \n# # Read in data from each column\n# for colName in x_col_names:\n#     X.append(rat.readColumn(ratDataset, colName))\n \n# # Read in training data\n# y = rat.readColumn(ratDataset, y_col_name)\n# # Set NA values to 0\n# y = np.where(y == b'NA',0,y)\n# y = y.astype(np.int16)\n \n# X.append(y)\n \n# X = np.array(X)\n# X = X.transpose()\n \n# # Remove rows with 0 (NA) for wetCode\n# X_train = X[X[:,-1] != 0]\n \n# # Remove non-finite values\n# X_train = X_train[np.isfinite(X_train).all(axis=1)]\n \n# # Split into variables (X) and class (y)\n# y_train = X_train[:,-1]\n# X_train = X_train[:,0:-1]\n \n# # Train Random Forests\n# clf = RandomForestClassifier(n_estimators=500, max_features=3, \\\n#       oob_score=True, n_jobs=6, verbose=2)\n \n# clf.fit(X_train, y_train)\n \n# # Set NaN values to 0\n# X = np.where(np.isfinite(X),X,0)\n \n# # Apply classification\n# predictClass = clf.predict(X[:,0:-1])\n \n# # Write out data to RAT\n# rat.writeColumn(ratDataset, 'predictClass', predictClass)\n# ratDataset = None",
+			"file": "algorithms/sklearn_SupportVectorMachines.py",
+			"file_size": 13635,
+			"file_write_time": 130597550030000000,
+			"settings":
+			{
+				"buffer_size": 15079,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Python 2.7.9 (default, Mar  1 2015, 12:57:24) \n[GCC 4.9.2] on linux2\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\n>>> ",
+			"settings":
+			{
+				"buffer_size": 144,
+				"line_ending": "Unix",
+				"name": "*REPL* [python]",
+				"scratch": true
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 372.0,
+		"last_filter": "rem",
+		"selected_items":
+		[
+			[
+				"rem",
+				"Package Control: Remove Package"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"pac",
+				"Package Control: Remove Channel"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"",
+				"About"
+			],
+			[
+				"Pack",
+				"Package Control: Install Package"
+			],
+			[
+				"p",
+				"Package Control: Install Package"
+			],
+			[
+				"pacla",
+				"Package Control: Install Package"
+			],
+			[
+				"P",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"python",
+			"jekyll",
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) "
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/martin/Documents/Programmierung/QSDM",
+		"/home/martin/Documents/Programmierung/QSDM/algorithms"
+	],
+	"file_history":
+	[
+		"/home/martin/Documents/Studium/PhD/LandsatCloudMasking/cfmask/src/CFMASK-LICENSE.txt",
+		"/home/martin/Documents/Programmierung/QSDM/QSDM.sublime-project",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/consulting.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/css/grayscale.css",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/contact.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_config.yml",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_layouts/default.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/persp.r",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/about.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/nav.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/header.html",
+		"/home/martin/Documents/Persönliches/Martin-Jung.github.io/_includes/head.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/contact.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/nav.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/head.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/css/font-awesome/less/tiles.less",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/about.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/blog.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/js/getFeed.js",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/cv.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_layouts/default.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/header.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/js.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/download.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/js/MailProtection.js",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_config.yml",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/_includes/css/bootstrap.min.css",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/css/font-awesome/css/font-awesome.css",
+		"/home/martin/Dokumente/Persönliches/OldJekyll/_includes/head.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/mail/contact_me.php",
+		"/home/martin/Dokumente/Persönliches/OldJekyll/_config.yml",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/css/font-awesome/css/font-awesome.min.css",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/index.html",
+		"/home/martin/Dokumente/Persönliches/Martin-Jung.github.io/feed.xml",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/classicthesis-config.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Acknowledgments.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Titleback.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Titlepage.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter0B.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter05.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Publication.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Contents.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Bibliography.bib",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter04.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Abstract.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/classicthesis.sty",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Declaration.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter0A.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Chapters/Chapter0B.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Appendix.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter01.tex",
+		"/home/martin/.config/sublime-text-3/Packages/User/LaTeX-Plus.sublime-settings",
+		"/home/martin/.config/sublime-text-3/Packages/LaTeX-Plus/LaTeX-Plus.sublime-settings",
+		"/home/martin/.config/sublime-text-3/Packages/LaTeX-Plus/README.md",
+		"/home/martin/.config/sublime-text-3/Packages/LaTeX-Plus/support/Default (Linux).sublime-keymap",
+		"/home/martin/.config/sublime-text-3/Packages/ConvertToUTF8/ConvertToUTF8.sublime-settings",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/consbiol.bst",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/ClassicThesis.bbl",
+		"/home/martin/.config/sublime-text-3/Packages/LaTeXTools/Default (Linux).sublime-keymap",
+		"/home/martin/Projekte/BIOFRAG/SqlQueries/BIOFRAG_DatabaseSetup.sql",
+		"/home/martin/.qgis2/python/plugins/LecoS/landscape_statistics.py",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Bibliography.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/FrontBackmatter/Colophon.aux",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/ClassicThesis.fdb_latexmk",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/classicthesis-config.aux",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Chapters/Chapter01.fls",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/ClassicThesis.log",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/ClassicThesis.tcp",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Arbeit_tex/main.tex",
+		"/home/martin/Dokumente/Studium/Kopenhagen/Masters/000Thesis_writeup/WriteUpLatex/Arbeit_tex/thesis-vorlage/Diplomarbeit/Diplomarbeit.tex",
+		"/home/martin/Dokumente/Persönliches/CV-Vorlage/mjung_cv.tex",
+		"/home/martin/.config/sublime-text-3/Packages/Terminal/Terminal.sublime-settings",
+		"/home/martin/.config/sublime-text-3/Packages/LaTeXTools/README.markdown",
+		"/home/martin/.config/sublime-text-3/Packages/User/LaTeXTools.sublime-settings",
+		"/home/martin/.qgis2/python/plugins/LecoS/landscape_polygonoverlay.py",
+		"/home/martin/.qgis2/python/plugins/LecoS/lecos_dlg.py",
+		"/home/martin/Projekte/BIOFRAG/Demo.Rmd",
+		"/home/martin/.config/sublime-text-3/Packages/User/Terminal.sublime-settings",
+		"/home/martin/Projekte/BIOFRAG/TeamViewInfos.txt",
+		"/home/martin/Projekte/BIOFRAG/SqlQueries/GisDataSchema.sql",
+		"/home/martin/Projekte/BIOFRAG/SqlQueries/ExportRasterFile.sh",
+		"/usr/share/qgis/python/plugins/processing/algs/qgis/FixedDistanceBuffer.py",
+		"/home/martin/Projekte/Jacob_Fungi/random.R",
+		"/home/martin/.qgis2/python/plugins/QSDM/qsdm_provider.py",
+		"/home/martin/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"brand",
+			"col-lg-12",
+			"stack",
+			"stackoverflow",
+			"float",
+			"  ",
+			"brooks",
+			"urlfont",
+			"color",
+			"\\}",
+			"doi\\",
+			"\\deg",
+			"url",
+			"empty",
+			"chapter",
+			"url",
+			"\\cite",
+			"% ",
+			" ",
+			"\\",
+			"ucs",
+			"biblio",
+			"math",
+			"ğ",
+			"draft",
+			"versio",
+			"bera",
+			"berom",
+			"text",
+			");\n",
+			"text",
+			",\n"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"}",
+			"\\doi",
+			"\\citep",
+			"{\\u g}"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "qsdm_main.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2371,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1521,
+								1521
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "algorithms/sklearn_SupportVectorMachines.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15079,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								13635,
+								13635
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3939.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 2,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 144,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								144,
+								144
+							]
+						],
+						"settings":
+						{
+							"auto_complete": true,
+							"auto_indent": false,
+							"default_dir": "/home/martin/Documents/Programmierung/QSDM",
+							"detect_indentation": false,
+							"gutter": false,
+							"history_arrows": true,
+							"indent_subsequent_lines": false,
+							"line_numbers": false,
+							"repl": true,
+							"repl_external_id": "python",
+							"repl_id": "41a879baadcc4d83b9d8beb3b32095c6",
+							"repl_restart_args":
+							{
+								"cmd":
+								[
+									"python",
+									"-i",
+									"-u"
+								],
+								"cwd": "$file_path",
+								"encoding": "utf8",
+								"extend_env":
+								{
+									"PYTHONIOENCODING": "utf-8"
+								},
+								"external_id": "python",
+								"syntax": "Packages/Python/Python.tmLanguage",
+								"type": "subprocess"
+							},
+							"repl_sublime2": false,
+							"smart_indent": false,
+							"spell_check": false,
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				0,
+				1,
+				1,
+				2
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			0.663341645885,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 109.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "QSDM.sublime-project",
+	"replace":
+	{
+		"height": 62.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"a",
+				"_includes/about.html"
+			],
+			[
+				"",
+				"classicthesis-config.tex"
+			],
+			[
+				"c",
+				"classicthesis.sty"
+			],
+			[
+				"b",
+				"Bibliography.bib"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 216.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
