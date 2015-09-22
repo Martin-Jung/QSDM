@@ -188,12 +188,8 @@ class NicheOverlapStatistics(GeoAlgorithm):
         else:
             return None
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 # MESS calculation after Elith 2010
 # Code adapted from Jean-Pierre Rossi, Robert Hijmans, Paulo van Breugel 
@@ -383,12 +379,8 @@ class MESS(GeoAlgorithm):
 
 
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 # Following the quantitative approach from Mesgaran et al. 2014
 class NovelConditions(GeoAlgorithm):
@@ -580,12 +572,8 @@ class NovelConditions(GeoAlgorithm):
         # Load in QGIS
         func.rasterInQgis(output)
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 class RangeShifts(GeoAlgorithm):
     
@@ -738,10 +726,5 @@ class RangeShifts(GeoAlgorithm):
         canvas.freeze(False)
         canvas.refresh()
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
-            
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")

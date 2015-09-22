@@ -33,11 +33,7 @@ from qgis.gui import *
 from qgis.analysis import *
 from qgis.utils import *
 
-<<<<<<< HEAD
-import os, subprocess
-=======
 import os, subprocess, ntpath, platform
->>>>>>> old
 import numpy
 try:
     from osgeo import gdal
@@ -56,26 +52,6 @@ from qsdm_settings import qsdm_settings
 import helperfunctions as func
 
 # Import Processing algorithm parameters
-<<<<<<< HEAD
-from processing.parameters.ParameterTable import ParameterTable
-from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
-from processing.parameters.ParameterRaster import ParameterRaster
-from processing.parameters.ParameterNumber import ParameterNumber
-from processing.parameters.ParameterSelection import ParameterSelection
-from processing.parameters.ParameterTableField import ParameterTableField
-from processing.parameters.ParameterExtent import ParameterExtent
-from processing.parameters.ParameterFixedTable import ParameterFixedTable
-from processing.parameters.ParameterVector import ParameterVector
-from processing.parameters.ParameterBoolean import ParameterBoolean
-from processing.parameters.ParameterFactory import ParameterFactory
-from processing.parameters.ParameterString import ParameterString
-
-from processing.outputs.OutputFactory import OutputFactory
-from processing.outputs.OutputTable import OutputTable
-from processing.outputs.OutputVector import OutputVector
-from processing.outputs.OutputRaster import OutputRaster
-from processing.outputs.Output import Output
-=======
 try:
     from processing.parameters.ParameterTable import ParameterTable
     from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
@@ -114,7 +90,6 @@ except ImportError:
     from processing.core.outputs import OutputVector
     from processing.core.outputs import OutputRaster
     from processing.core.outputs import Output    
->>>>>>> old
 
 
 class Maxent(GeoAlgorithm):
@@ -163,10 +138,7 @@ class Maxent(GeoAlgorithm):
         mem = str( qsdm_settings.getMEM() )     # available memory for MAXENT
         work = qsdm_settings.workPath()         # get the name of the folder to save the Maxent model results to
         temp = qsdm_settings.getTEMP()+os.sep+"MAXENT" # folder where reprojected files and such are saved
-<<<<<<< HEAD
-=======
             
->>>>>>> old
         progress.setConsoleInfo("Starting Parameter and File Preperation")
         # Check if temp folder exists, otherwise create it
         if os.path.exists(temp) == False:
@@ -235,11 +207,7 @@ class Maxent(GeoAlgorithm):
         # Get Systemwide temporary folder to save the species csv
         speciesPath = temp + os.sep +"species.csv" 
         species = func.saveToCSV(coord,("Species","Long","Lat"),speciesPath)
-<<<<<<< HEAD
-        specieslist = func.getUniqueAttributeList( v, scl)
-=======
         specieslist = func.getUniqueAttributeList( v, scl,True)
->>>>>>> old
         progress.setConsoleInfo("Species data successfully prepared for MAXENT")
         progress.setConsoleInfo("---")
         func.updateProcessing(progress,2,n,"Loaded Species data.")
@@ -310,11 +278,7 @@ class Maxent(GeoAlgorithm):
                 main_rows = (fin_coordinates[3] - fin_coordinates[1]) / abs(main_geo_transform[5])
                 progress.setConsoleInfo("Creating new raster based on greatest extent with %s columns and %s rows" % (str(main_cols),str(main_rows)))
     
-<<<<<<< HEAD
-                #todo: Check coordinates
-=======
                 #FIXME: Check coordinates
->>>>>>> old
                 big_coord = [main_geo_transform[0], main_geo_transform[3], main_geo_transform[0] + (main_geo_transform[1] * main_rows), main_geo_transform[3] + (main_geo_transform[5] * main_cols)]
                 
                 # 2. Loop through rasters and Intersect them export the biggest 
@@ -397,12 +361,6 @@ class Maxent(GeoAlgorithm):
             DEVNULL = open(os.devnull, 'wb')
         proc = subprocess.call(['java', '-version'],stdin=subprocess.PIPE, stdout=DEVNULL, stderr=subprocess.STDOUT)
         if proc == 0:
-<<<<<<< HEAD
-            start = "java -mx" + str(int(mem)) + "m -jar " + maxent
-        else:
-            progress.setConsoleInfo("JAVA could not be run by default. Using link to binary from set JAVA folder.")
-            start = java + " -mx" + str(int(mem)) + "m -jar " + maxent
-=======
             start = "java -mx" + str(int(mem)) + "m -jar "
         else:
             progress.setConsoleInfo("JAVA could not be run by default. Using link to binary from set JAVA folder.")
@@ -413,7 +371,6 @@ class Maxent(GeoAlgorithm):
             start += "\"" + maxent + "\""
         else:
             start += maxent
->>>>>>> old
             
         myCommand = start + " samplesfile=" + speciesPath 
         myCommand += " environmentallayers=" + temp 
@@ -497,13 +454,6 @@ class Maxent(GeoAlgorithm):
                     # The band of classLayer
                     classLyrBnd = 1
                     # Color list for ramp
-<<<<<<< HEAD
-                    clrLst = [ QgsColorRampShader.ColorRampItem(0, QColor(0,0,255)),  # blue
-                               QgsColorRampShader.ColorRampItem(0.25,QColor(0,255,0)), # green
-                               QgsColorRampShader.ColorRampItem(0.5, QColor(255,255,0)),# yellow
-                               QgsColorRampShader.ColorRampItem(0.75, QColor(255,128,0)), # orange
-                               QgsColorRampShader.ColorRampItem(0.8, QColor(255,0,0)) ] # red
-=======
                     clrLst = [  QgsColorRampShader.ColorRampItem(0, QColor(224,224,224),"0"),      # Grey
                                 QgsColorRampShader.ColorRampItem(0.01, QColor(0,0,153),"> 0.01"),    # darkblue
                                 QgsColorRampShader.ColorRampItem(0.2, QColor(153,204,255),"0.2"),  # lightblue                   
@@ -512,7 +462,6 @@ class Maxent(GeoAlgorithm):
                                 QgsColorRampShader.ColorRampItem(0.65, QColor(255,255,0),"0.65"),  # yellow
                                 QgsColorRampShader.ColorRampItem(0.75, QColor(255,128,0),"0.75"),  # orange
                                 QgsColorRampShader.ColorRampItem(0.85, QColor(255,0,0),">0.85") ]  # red
->>>>>>> old
                     #Create the shader
                     lyrShdr = QgsRasterShader()
                     #Create the color ramp function
@@ -537,16 +486,8 @@ class Maxent(GeoAlgorithm):
             
             canvas.freeze(False)
             canvas.refresh()
-<<<<<<< HEAD
-=======
-    
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None  
->>>>>>> old
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
             
 
 class MaxentGUI(GeoAlgorithm):
@@ -626,11 +567,7 @@ class MaxentGUI(GeoAlgorithm):
             # Get Systemwide temporary folder to save the species csv
             speciesPath = temp + os.sep +"species.csv" 
             species = func.saveToCSV(coord,("Species","Long","Lat"),speciesPath)
-<<<<<<< HEAD
-            specieslist = func.getUniqueAttributeList( v, scl)
-=======
             specieslist = func.getUniqueAttributeList( v, scl, True)
->>>>>>> old
         progress.setConsoleInfo("Species data successfully prepared for MAXENT")
         progress.setConsoleInfo("---")
         ## Maxent execution
@@ -641,12 +578,6 @@ class MaxentGUI(GeoAlgorithm):
             DEVNULL = open(os.devnull, 'wb')
         proc = subprocess.call(['java', '-version'],stdin=subprocess.PIPE, stdout=DEVNULL, stderr=subprocess.STDOUT)
         if proc == 0:
-<<<<<<< HEAD
-            start = "java -mx" + str(int(mem)) + "m -jar " + maxent
-        else:
-            progress.setConsoleInfo("JAVA could not be run by default. Using link to binary from set JAVA folder.")
-            start = java + " -mx" + str(int(mem)) + "m -jar " + maxent
-=======
             start = "java -mx" + str(int(mem)) + "m -jar "
         else:
             progress.setConsoleInfo("JAVA could not be run by default. Using link to binary from set JAVA folder.")
@@ -657,7 +588,6 @@ class MaxentGUI(GeoAlgorithm):
             start += "\"" + maxent + "\""
         else:
             start += maxent
->>>>>>> old
             
         myCommand = start + " samplesfile=" + speciesPath 
         myCommand += " environmentallayers=" + env_dir 
@@ -708,25 +638,13 @@ class MaxentGUI(GeoAlgorithm):
                 p = work + os.sep + t + ".asc"
                 func.rasterInQgis(p)
                 # Finished
-<<<<<<< HEAD
-        
-
-class MaxentParameters(GeoAlgorithm):
-    
-=======
-
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 class MaxentParameters(GeoAlgorithm):
     
     OUT_F = 'OUT_F'
     of = ['logistic','raw','cumulative']
->>>>>>> old
     RESP = 'RESP'
     RESP_EXP = 'RESP_EXP'
     PIC = 'PIC'
@@ -766,10 +684,7 @@ class MaxentParameters(GeoAlgorithm):
         self.cmdName = 'maxent_param'
         self.group = 'Species Distribution Modelling'
 
-<<<<<<< HEAD
-=======
         self.addParameter(ParameterSelection(self.OUT_F, "Output Format", self.of, 0))
->>>>>>> old
         self.addParameter(ParameterBoolean(self.RESP, 'Create Response Curves',False))
         self.addParameter(ParameterBoolean(self.RESP_EXP, 'Show exponent in Response Curves',False))
         self.addParameter(ParameterBoolean(self.PIC, 'Create pictures for each grid',True))
@@ -802,10 +717,7 @@ class MaxentParameters(GeoAlgorithm):
 
     def processAlgorithm(self, progress):
         param = dict()
-<<<<<<< HEAD
-=======
         param["outputformat"] = self.of[self.getParameterValue(self.OUT_F)]
->>>>>>> old
         param["responsecurves"] = self.getParameterValue(self.RESP)
         param["responsecurvesexponent"] = self.getParameterValue(self.RESP_EXP)
         param["pictures"] = self.getParameterValue(self.PIC)
@@ -838,15 +750,7 @@ class MaxentParameters(GeoAlgorithm):
             res.append((option[0],str( option[1] ).lower()))
         
         out = self.getOutputValue(self.OUT_PARAM)
-<<<<<<< HEAD
-        species = func.saveToCSV(res,("command","value"),out)
-=======
         species = func.saveToCSV(res,("command","value"),out)
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
->>>>>>> old
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")

@@ -30,11 +30,8 @@ from PyQt4.QtGui import *
 # Import QGIS analysis tools
 from qgis.core import *
 from qgis.gui import *
-<<<<<<< HEAD
-=======
 from qgis.analysis import *
 from qgis.utils import *
->>>>>>> old
 
 import os,sys,csv,string,math,operator,subprocess,tempfile,inspect
 
@@ -50,8 +47,6 @@ except ImportError:
 
 import numpy
 
-<<<<<<< HEAD
-=======
 try:
     import Image, ImageDraw
 except ImportError:
@@ -60,7 +55,6 @@ except ImportError:
     except ImportError:
         pass
 
->>>>>>> old
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.Processing import Processing
@@ -73,24 +67,6 @@ from qsdm_settings import qsdm_settings
 import helperfunctions as func
 
 # Import Processing algorithm parameters
-<<<<<<< HEAD
-from processing.parameters.ParameterTable import ParameterTable
-from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
-from processing.parameters.ParameterRaster import ParameterRaster
-from processing.parameters.ParameterNumber import ParameterNumber
-from processing.parameters.ParameterSelection import ParameterSelection
-from processing.parameters.ParameterTableField import ParameterTableField
-from processing.parameters.ParameterExtent import ParameterExtent
-from processing.parameters.ParameterFixedTable import ParameterFixedTable
-from processing.parameters.ParameterVector import ParameterVector
-from processing.parameters.ParameterBoolean import ParameterBoolean
-from processing.parameters.ParameterFactory import ParameterFactory
-from processing.outputs.OutputFactory import OutputFactory
-from processing.outputs.OutputTable import OutputTable
-from processing.outputs.OutputVector import OutputVector
-from processing.outputs.OutputRaster import OutputRaster
-    
-=======
 try:
     from processing.parameters.ParameterTable import ParameterTable
     from processing.parameters.ParameterMultipleInput import ParameterMultipleInput
@@ -131,14 +107,11 @@ except ImportError:
     from processing.core.outputs import Output
     
 ## Raster Stuff
->>>>>>> old
 
 class CreateRichnessGrid(GeoAlgorithm):
     
     VECTOR = "VECTOR"
     SPEC_COL = "SPEC_COL"
-<<<<<<< HEAD
-=======
     METHOD = "METHOD"
     m = ['Species Richness','Weighted Endemism','Corrected Weighted Endemism']
             #Species Richness (SR) is sum of unique species per cell.  
@@ -155,7 +128,6 @@ class CreateRichnessGrid(GeoAlgorithm):
             # necessarily areas that are species rich.  
             #   CWE = WE/K (K is the total number of species in a grid cell) 
 
->>>>>>> old
     EXTENT = "EXTENT"
     GRAIN_SIZE = "GRAIN_SIZE"
     
@@ -167,20 +139,12 @@ class CreateRichnessGrid(GeoAlgorithm):
     def defineCharacteristics(self):
         self.name = 'Create Species Richness grid'
         self.cmdName = 'richnessgrid'
-<<<<<<< HEAD
-        self.group = 'Data Manipulation'
-        
-        self.addParameter(ParameterVector(self.VECTOR, 'Species localities',[ParameterVector.VECTOR_TYPE_POINT],False)) # Allow point and later polygons ,ParameterVector.VECTOR_TYPE_POLYGON
-        self.addParameter(ParameterTableField(CreateRichnessGrid.SPEC_COL, "Species Name", CreateRichnessGrid.VECTOR))
-        self.addParameter(ParameterNumber(self.GRAIN_SIZE, 'Grain size',1,None,100))
-=======
         self.group = 'Data Preperation'
         
         self.addParameter(ParameterVector(self.VECTOR, 'Species localities',[ParameterVector.VECTOR_TYPE_POINT],False)) # Allow point and polygons  #,/ranges ParameterVector.VECTOR_TYPE_POLYGON
         self.addParameter(ParameterTableField(CreateRichnessGrid.SPEC_COL, "Species Name", CreateRichnessGrid.VECTOR))
         self.addParameter(ParameterSelection(self.METHOD, "What to calculate", self.m, 0))
         self.addParameter(ParameterNumber(self.GRAIN_SIZE, 'Grain size (Projection dependent)',1.0,None,100.0))
->>>>>>> old
         self.addParameter(ParameterExtent(self.EXTENT, 'Extent of the new Grid'))
         
         self.addOutput(OutputRaster(self.GRID,'Richness Grid'))
@@ -189,13 +153,9 @@ class CreateRichnessGrid(GeoAlgorithm):
         # Do the stuff
         vector = self.getParameterValue(self.VECTOR)
         v = Processing.getObject(vector)
-<<<<<<< HEAD
-        scl = self.getParameterValue(self.SPEC_COL)
-=======
 
         scl = self.getParameterValue(self.SPEC_COL)
         what = self.m[self.getParameterValue(self.METHOD)]
->>>>>>> old
         ext = self.getParameterValue(self.EXTENT)
         try:
             ext = string.split(ext,",") # split 
@@ -203,10 +163,6 @@ class CreateRichnessGrid(GeoAlgorithm):
             raise GeoAlgorithmExecutionException("Please set an extent for the generated raster")        
         cs  =  self.getParameterValue(self.GRAIN_SIZE)
         output = self.getOutputValue(self.GRID)
-<<<<<<< HEAD
-
-=======
->>>>>>> old
         # Create output layer
         xmin = float(ext[0])
         xmax = float(ext[1])
@@ -217,14 +173,6 @@ class CreateRichnessGrid(GeoAlgorithm):
         
         cols = int( abs( (xmax-xmin)/gt[1] ) )
         rows = int( abs( (ymax-ymin)/gt[5] ) )
-<<<<<<< HEAD
-        fin_array = numpy.zeros((rows,cols)) # Create empty grid
-
-        #if vector is a point do the following, else calculate for overlapping range sizes
-        if v.geometryType() == QGis.Point:
-            progress.setConsoleInfo("Using the point layers to calculate Species richness for resulting grid.")
-            progress.setConsoleInfo("---")
-=======
         try:
             fin_array = numpy.zeros((rows,cols)) # Create empty grid
         except MemoryError:
@@ -241,7 +189,6 @@ class CreateRichnessGrid(GeoAlgorithm):
             fin_array = withBorders
             rows, cols = fin_array.shape
                         
->>>>>>> old
             # Get the number of species
             noSpecies = func.getUniqueAttributeList( v, scl)
             progress.setConsoleInfo("Processing %s number of different species" % (str(len(noSpecies))) )
@@ -249,50 +196,6 @@ class CreateRichnessGrid(GeoAlgorithm):
             ds = ogr.Open(vector)
             name = ds.GetLayer().GetName()
             proj = ds.GetLayer().GetSpatialRef()
-<<<<<<< HEAD
-            n = ds.GetLayer().GetFeatureCount()
-
-            k = 1
-            for spec in noSpecies:
-                # Make a copy of the final_array
-                work_array = numpy.zeros_like(fin_array)
-                # Vector layer subsetting to the specific species
-                layers = ds.ExecuteSQL("SELECT * FROM %s WHERE %s = '%s'" % (name, scl, spec) )
-                progress.setConsoleInfo("Gridding %s individual points of species %s " % (str(layers.GetFeatureCount()), spec ))                
-                func.updateProcessing(progress,k,n )
-                for i in range(0,layers.GetFeatureCount()):
-                    f = layers.GetFeature(i)
-                    geom = f.GetGeometryRef()
-                    mx,my= geom.GetX(), geom.GetY()  #coord in map units                
-                    pp = func.world2Pixel(gt, mx,my)                
-                    x = round(pp[0])
-                    y = round(pp[1])
-
-                    if x < 0 or y < 0 or x >= work_array.shape[1] or y >= work_array.shape[0]:
-                        progress.setConsoleInfo("Point %s outside given exent" % (str( f.GetFID() )) )
-                    else:            
-                        # Check if species was already added to grid cell
-                        test = work_array[y,x]
-                        if test != 1:
-                            work_array[y,x] = 1
-                k += 1
-                # Add the working arrays values to 
-                fin_array = numpy.add(work_array,fin_array)
-
-        elif v.geometryType() == QGis.Polygon:
-            progress.setConsoleInfo("Using the range size polygons to calculate Species richness for resulting grid.")
-
-            # rasterization        
-        if numpy.count_nonzero(fin_array) == 0:
-            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR,"No values were rasterized. Check GeometryType and Vector Projection.")
-            
-            
-        # Create output raster
-        func.createRaster(output,cols,rows,fin_array,nodata,gt,proj,'GTiff')
-        # And free up memory
-        del(ds,layers)
-        
-=======
             proj = proj.ExportToWkt()
             n = ds.GetLayer().GetFeatureCount()
 
@@ -459,13 +362,8 @@ class CreateRichnessGrid(GeoAlgorithm):
         return clip2            
 
 
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
->>>>>>> old
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 class DataTransformationSimple(GeoAlgorithm):
     
@@ -482,11 +380,7 @@ class DataTransformationSimple(GeoAlgorithm):
     def defineCharacteristics(self):
         self.name = 'Data transformation (Simple)'
         self.cmdName = 'transformationSimple'
-<<<<<<< HEAD
-        self.group = 'Data Manipulation'
-=======
         self.group = 'Data Preperation'
->>>>>>> old
         
         self.addParameter(ParameterRaster(self.RASTER, "Input Grid", False))
         self.addParameter(ParameterSelection(self.TRANSFORM, "Transformation method", self.tsel, 0))
@@ -610,15 +504,8 @@ class DataTransformationSimple(GeoAlgorithm):
             res = (array - numpy.nanmin(array,axis=0)) / (numpy.nanmax(array,axis=0) - numpy.nanmin(array,axis=0))
             return res
 
-<<<<<<< HEAD
-# Mostly inspired by this brilliant posting 
-=======
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 # The credits of the following approach go to Yury Ryabov (c) 2014 - http://ssrebelious.blogspot.com
 class RasterUnification(GeoAlgorithm):
@@ -705,29 +592,20 @@ class RasterUnification(GeoAlgorithm):
         canvas.freeze(False)
         canvas.refresh()
         
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 
 ## Vector stuff
 # Mostly inspired by this brilliant posting, but also includes code
->>>>>>> old
 # http://kldavenport.com/mahalanobis-distance-and-outliers/
 class VectorOutlierSelection(GeoAlgorithm):
     """
     Detects Outliers in Point data based on their Mahalanobis distances
     """    
     VECTOR = "VECTOR"
-<<<<<<< HEAD
-#    MULTIPLIER = "MULTIPLIER"
-=======
     METHOD = "METHOD"
     MULTIPLIER = "MULTIPLIER"
->>>>>>> old
     
     def getIcon(self):
         return QIcon(os.path.dirname(__file__) +os.sep+".."+ os.sep+"icons"+os.sep+"outlier.png")
@@ -735,17 +613,10 @@ class VectorOutlierSelection(GeoAlgorithm):
     def defineCharacteristics(self):
         self.name = 'Select Outlier Points'
         self.cmdName = 'outlierselect'
-<<<<<<< HEAD
-        self.group = 'Data Manipulation'
-        
-        self.addParameter(ParameterVector(self.VECTOR, 'Species localities',[ParameterVector.VECTOR_TYPE_POINT],False))
-#        self.addParameter(ParameterNumber(self.MULTIPLIER, 'Multiplier',1,None,2.0))
-=======
         self.group = 'Data Preperation'
         
         self.addParameter(ParameterVector(self.VECTOR, 'Species localities',[ParameterVector.VECTOR_TYPE_POINT],False))
         self.addParameter(ParameterNumber(self.MULTIPLIER, 'Multiplier',1,None,2.0))
->>>>>>> old
     
     def processAlgorithm(self, progress):
         # Do the stuff
@@ -824,9 +695,6 @@ class VectorOutlierSelection(GeoAlgorithm):
         for i in range(len(diff_xy)):
             md.append(numpy.sqrt(numpy.dot(numpy.dot(numpy.transpose(diff_xy[i]),inv_covariance_xy),diff_xy[i])))
         return md
-<<<<<<< HEAD
-    
-=======
 
     def reject_outliers(x,y, no_std = 2.):
         array = numpy.array([x,y])
@@ -835,12 +703,8 @@ class VectorOutlierSelection(GeoAlgorithm):
         s = d/mdev if mdev else 0
         return array[s<no_std]
     
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
         
 
 # Removes all clustered points with specific euclidean distance
@@ -948,12 +812,7 @@ class SpatialRarefication(GeoAlgorithm):
         s = d/mdev if mdev else 0
         return array[s<no_std]
     
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
 
 
->>>>>>> old

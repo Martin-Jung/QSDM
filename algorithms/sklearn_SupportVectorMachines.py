@@ -303,10 +303,5 @@ class SupportVectorMachine(GeoAlgorithm):
 
         outData = None # Close writing
 
-
-    def help(self):
-        helppath = os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")
-        if os.path.isfile(helppath):
-            return False, helppath
-        else:
-            return False, None
+    def helpFile(self):
+        return os.path.join(os.path.dirname(__file__) + os.sep + ".." + os.sep + "help", self.cmdName + ".html")

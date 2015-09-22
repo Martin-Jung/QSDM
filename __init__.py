@@ -24,11 +24,7 @@ def name():
 def description():
     return "Species distribution modelling support for the QGIS Processing toolbox"
 def version():
-<<<<<<< HEAD
-    return "Version 0.1"
-=======
     return "Version 0.2"
->>>>>>> old
 def icon():
     return "icons/default.png"
 def qgisMinimumVersion():

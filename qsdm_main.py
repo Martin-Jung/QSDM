@@ -2,11 +2,7 @@
 """
 /***************************************************************************
  QSDM
-<<<<<<< HEAD
-        Species distribution modelling support for the QGIS Processing toolbox
-=======
         Species distribution modelling support for the QGIS Processing toolb    ox
->>>>>>> old
                         -------------------
         begin                : 2014-03-31
         copyright            : (C) 2014 by Martin Jung

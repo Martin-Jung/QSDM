@@ -10,14 +10,14 @@ name=QSDM
 qgisMinimumVersion=2.0
 about= Enabling various functions for biodiversity modelling for QGIS
 description= Species distribution modeling support for the QGIS Processing toolbox
-version= 0.2
+version=0.2
 
 # Uncomment the following line and add your changelog entries:
 changelog= 
 	0.2
 	Update:
 	- JAVA Error message fixed.
-	- 
+	- Processing Error for 2.6 fixed
 
 	0.1
 	Initial Release:

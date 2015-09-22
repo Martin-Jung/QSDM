@@ -54,14 +54,9 @@ class qsdm_settings:
             try:
                 proc = subprocess.call(['java', '-version'],stdin=subprocess.PIPE, stdout=DEVNULL, stderr=subprocess.STDOUT)
             except Exception, err:
-<<<<<<< HEAD
-                ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "There has been an Error detecting JAVA for QSDM. Please set correct the path manually.") 
-                folder = ''
-=======
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "There has been an Error detecting JAVA for QSDM. Please set correct the path manually.")   
                 folder = ''
                 proc = 1 
->>>>>>> old
             if proc == 0:
                 # java detected, look for executable
                 env = os.environ

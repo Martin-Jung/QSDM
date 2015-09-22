@@ -24,10 +24,7 @@ __copyright__ = '(C) 2014, Martin Jung'
 __revision__ = '$Format:%H$' # This will get replaced with a git SHA1 when you do a git archive
 
 # Import PyQT bindings
-<<<<<<< HEAD
-=======
 from PyQt4.QtCore import *
->>>>>>> old
 from PyQt4.QtGui import *
 
 # Processing bindings
@@ -131,24 +128,12 @@ class qsdm_serviceProvider(AlgorithmProvider):
             self.req["MAXENT"] = True        
         # Check for Numpy
         try:
-<<<<<<< HEAD
-            import numpy as np
-=======
             import numpy
->>>>>>> old
             self.req["Numpy"] = True
         except ImportError:
             self.req["Numpy"] = False        
         # Check for Scipy
         try:
-<<<<<<< HEAD
-            import scipy as sp
-            self.req["Scipy"] = True
-        except ImportError:
-            self.req["Scipy"] = False
-        # Check for Scikits
-        self.req["Scikits"] = False
-=======
             import scipy
             self.req["Scipy"] = True
         except ImportError:
@@ -170,7 +155,6 @@ class qsdm_serviceProvider(AlgorithmProvider):
             except ImportError:
                 self.req["PIL"] = False
 
->>>>>>> old
         # R support available?
         try:
             import rpy2
@@ -191,14 +175,6 @@ class qsdm_serviceProvider(AlgorithmProvider):
         self.preloadedAlgs = []        
         # Check available libraries and load tools accordingly
         
-<<<<<<< HEAD
-        # Data Preperation methods require only numpy
-        if self.req["Numpy"] == True:
-            from algorithms.DataPreperation import *
-            #self.preloadedAlgs.append( VectorOutlierSelection() )
-            self.preloadedAlgs.append( CreateRichnessGrid() )
-            self.preloadedAlgs.append( DataTransformationSimple() )
-=======
         # Data Preperation methods require numpy
         if self.req["Numpy"] == True:
             from algorithms.DataPreperation import *
@@ -216,7 +192,6 @@ class qsdm_serviceProvider(AlgorithmProvider):
 #        if self.req["Scipy"] == True:
 #            from algorithms.DataAnalysis import *            
 #            self.preloadedAlgs.append( NovelConditions() )                    
->>>>>>> old
         
         # Maxent support if JAVA is running and enable the tool. Give Error message to inform user to 
         # specify the path to the maxent binary if not already set
@@ -225,8 +200,6 @@ class qsdm_serviceProvider(AlgorithmProvider):
             self.preloadedAlgs.append( MaxentParameters() ) # Generate optional table displaying the MAXENT parameters
             self.preloadedAlgs.append( Maxent() ) # Add Maxent Modelling
             self.preloadedAlgs.append( MaxentGUI() ) # Add Maxent Modelling
-<<<<<<< HEAD
-=======
         
         # Load all the scikit modelling techniques
         if self.req["Scikits"] == True:
@@ -234,7 +207,6 @@ class qsdm_serviceProvider(AlgorithmProvider):
             from algorithms.sklearn_SupportVectorMachines import *
             self.preloadedAlgs.append( SupportVectorMachine() ) # Add Support Vector Machines
             
->>>>>>> old
          
 #         if self.req["Scipy"] == True:
 #             try:
